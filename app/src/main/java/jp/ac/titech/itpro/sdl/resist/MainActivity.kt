@@ -10,9 +10,15 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 
 class MainActivity : AppCompatActivity(), SensorEventListener {
+
     private var rotationView: RotationView? = null
     private var manager: SensorManager? = null
     private var gyroscope: Sensor? = null
+
+    private val NS2S = 1.0f / 1000000000.0f
+    private var timestamp: Long = 0
+    private var currentRad: Double = 0.0
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
@@ -44,8 +50,14 @@ class MainActivity : AppCompatActivity(), SensorEventListener {
 
     override fun onSensorChanged(event: SensorEvent) {
         val omegaZ = event.values[2] // z-axis angular velocity (rad/sec)
-        // TODO: calculate right direction that cancels the rotation
-        rotationView!!.setDirection(omegaZ.toDouble())
+
+        if (timestamp > 0) {
+            val dT = (event.timestamp - timestamp) * NS2S
+            currentRad += omegaZ * dT
+        }
+        rotationView!!.setDirection(currentRad)
+
+        timestamp = event.timestamp
     }
 
     override fun onAccuracyChanged(sensor: Sensor, accuracy: Int) {
